@@ -74,8 +74,10 @@ const css = `
   font-size: 14px;
   font-weight: 600;
   padding: 8px 16px;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   white-space: nowrap;
+  min-width: 180px;
+  text-align: center;
 }
 
 & .clear-cache-btn:hover:not(:disabled) {

@@ -30,10 +30,15 @@ const css = `
   margin: 0;
   padding: var(--table-spacing);
 }
+& fieldset > div {
+  display: flex;
+  align-items: center;
+}
 & legend {
   color: var(--gray);
   float: left;
   font-size: .9rem;
   padding-right: 1rem;
+  line-height: 1;
 }
 `;

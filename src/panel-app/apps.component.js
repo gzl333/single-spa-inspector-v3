@@ -210,6 +210,13 @@ export default function Apps(props) {
                             startEdit(app.name);
                           }
                         }}
+                        onKeyDown={(e) => {
+                          // 在编辑模式下按 Enter 键触发保存
+                          if (e.key === "Enter" && editingApps[app.name]) {
+                            e.preventDefault();
+                            handleSaveAndRefresh(app.name);
+                          }
+                        }}
                         placeholder="Enter override URL..."
                       />
                       {/* Clear 按钮 - 仅在 edit 模式且有内容时显示 */}
