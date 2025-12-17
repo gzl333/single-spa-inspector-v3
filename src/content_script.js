@@ -4,7 +4,7 @@
 import browser from "webextension-polyfill";
 
 // Listen for routing events from the MAIN world script
-window.addEventListener("single-spa-inspector:routing-event", () => {
+window.addEventListener("single-spa-inspector-pro:routing-event", () => {
   browser.runtime.sendMessage({
     from: "single-spa",
     type: "routing-event",

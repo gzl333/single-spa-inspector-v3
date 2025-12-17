@@ -1,8 +1,8 @@
-# single-spa-inspector v3 开发计划文档
+# single-spa Inspector Pro v3 开发计划文档
 
 ## 📋 项目概述
 
-**项目名称：** single-spa-inspector（fork 版本 v3）
+**项目名称：** single-spa Inspector Pro（fork 版本 v3）
 
 **开发目标：**
 1. 迁移至 Chrome Extension Manifest V3
@@ -117,15 +117,15 @@
 ```json
 {
   "manifest_version": 3,
-  "name": "single-spa Inspector",
+  "name": "single-spa Inspector Pro",
   "short_name": "sspa Inspect",
   "version": "0.6.0",
   "author": "Anthony Frehner",
-  "homepage_url": "https://github.com/single-spa/single-spa-inspector",
+  "homepage_url": "https://github.com/gzl333/single-spa-inspector-pro",
   "description": "A devtools panel for single-spa applications",
   "action": {
     "default_icon": "./logo-white-bgblue.png",
-    "default_title": "single-spa Inspector"
+    "default_title": "single-spa Inspector Pro"
   },
   "icons": {
     "48": "./logo-white-bgblue.png",
@@ -610,7 +610,7 @@ const css = `
 3. 开启"开发者模式"
 4. 点击"加载已解压的扩展程序"，选择项目根目录
 5. 打开一个 single-spa 应用页面
-6. 打开 DevTools，找到 "single-spa Inspector" 面板
+6. 打开 DevTools，找到 "single-spa Inspector Pro" 面板
 7. 测试以下功能：
    - [ ] 面板正常加载
    - [ ] 应用列表正常显示
@@ -768,11 +768,11 @@ Firefox 从版本 109 开始支持 Manifest V3，但某些 API 可能有差异�
 ```bash
 # 构建 Firefox 扩展
 npm run build:firefox
-# 输出: web-ext-artifacts/single-spa-inspector-firefox-0.6.0.zip
+# 输出: web-ext-artifacts/single-spa-inspector-pro-firefox-0.6.0.zip
 
 # 构建 Chrome 扩展
 npm run build:chrome
-# 输出: web-ext-artifacts/single-spa-inspector-chrome-0.6.0.zip
+# 输出: web-ext-artifacts/single-spa-inspector-pro-chrome-0.6.0.zip
 ```
 
 ### 本地测试

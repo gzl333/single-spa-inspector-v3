@@ -4,7 +4,7 @@
 
 **用户痛点：** 在微前端开发过程中，经常需要强制清空当前页面的所有浏览器缓存，以确保加载最新的代码和资源。目前需要手动操作浏览器设置或使用快捷键，操作繁琐。
 
-**目标功能：** 类似 [Clear Cache](https://chromewebstore.google.com/detail/clear-cache/cppjkneekbjaeellbfkmgnhonkkjfpdn) 扩展，在 single-spa Inspector 中添加一键清除缓存功能，点击按钮即可清除浏览器缓存并刷新页面。
+**目标功能：** 类似 [Clear Cache](https://chromewebstore.google.com/detail/clear-cache/cppjkneekbjaeellbfkmgnhonkkjfpdn) 扩展，在 single-spa Inspector Pro 中添加一键清除缓存功能，点击按钮即可清除浏览器缓存并刷新页面。
 
 **参考项目：**
 - [Clear Cache Chrome Extension](https://chromewebstore.google.com/detail/clear-cache/cppjkneekbjaeellbfkmgnhonkkjfpdn)

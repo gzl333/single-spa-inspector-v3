@@ -24,7 +24,7 @@
 **package.json:**
 ```json
 {
-  "name": "your-single-spa-inspector",
+  "name": "single-spa-inspector-pro",
   "version": "1.0.0",
   "description": "Your customized single-spa devtools extension",
   "author": "Your Name <your.email@example.com>"
@@ -34,7 +34,7 @@
 **manifest.json / manifest.chrome.json:**
 ```json
 {
-  "name": "Your single-spa Inspector",
+  "name": "single-spa Inspector Pro",
   "short_name": "Your SSPA Inspector",
   "version": "1.0.0",
   "author": "Your Name",
@@ -150,7 +150,7 @@ npm run build:chrome
 ### 步骤 3: 填写扩展信息
 
 **基本信息：**
-- **Name**: Your single-spa Inspector
+- **Name**: single-spa Inspector Pro
 - **Add-on URL**: 自定义 URL 路径
 - **Summary**: 简短描述（250 字符以内）
 - **Description**: 详细描述，支持 Markdown
@@ -213,7 +213,7 @@ npm run build:chrome
 
 **基本信息：**
 - **Language**: 选择主要语言
-- **Product name**: Your single-spa Inspector
+- **Product name**: single-spa Inspector Pro
 - **Short description**: 简短描述（132 字符以内）
 - **Full description**: 详细描述
 

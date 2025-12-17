@@ -4,7 +4,7 @@
 
 ---
 
-## ✨ What's New in v3
+## ✨ What's New in Pro
 
 ### 🔧 Manifest V3 Support
 
@@ -151,20 +151,20 @@ To fix a bug, add features, or just build the extension locally:
 ### Firefox
 
 1. Install Firefox
-1. [Create a FF profile](#create-a-firefox-dev-profile) called `single-spa-inspector-dev`. Alternatively, temporarily install the extension as documented in https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing.
+1. [Create a FF profile](#create-a-firefox-dev-profile) called `single-spa-inspector-pro-dev`. Alternatively, temporarily install the extension as documented in https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing.
 1. Clone this repo
 1. `nvm use` (ensures we're all using the same version of node)
 1. `npm i`
 1. `npm start`
-1. Open devtools and navigate to the **single-spa Inspector** tab
+1. Open devtools and navigate to the **single-spa Inspector Pro** tab
 
 #### Create a Firefox dev profile
 
-Currently, development happens by default in Firefox. If you would like Firefox to remember any settings that you change to Firefox itself, this project is configured to use a profile called "single-spa-inspector-dev". To create this profile, go to [about:profiles](about:profiles). Firefox will use that profile and remember any changes you make (e.g. devtools location, devtools dark mode, etc.)
+Currently, development happens by default in Firefox. If you would like Firefox to remember any settings that you change to Firefox itself, this project is configured to use a profile called "single-spa-inspector-pro-dev". To create this profile, go to [about:profiles](about:profiles). Firefox will use that profile and remember any changes you make (e.g. devtools location, devtools dark mode, etc.)
 
 #### Debugging
 
-Once single-spa Inspector is running, open a new tab and navigate to [about:debugging](about:debugging). single-spa Inspector should be listed as a Temporary Extension, and a "Debug" control should be displayed. Click on this to enable devtools for the extension. In the upper-right corner, click on the divided square icon next to the 3-dot menu, and select `/build/panel.html` as the target. You can now inspect the inspector UI as you would a normal webpage.
+Once single-spa Inspector Pro is running, open a new tab and navigate to [about:debugging](about:debugging). single-spa Inspector Pro should be listed as a Temporary Extension, and a "Debug" control should be displayed. Click on this to enable devtools for the extension. In the upper-right corner, click on the divided square icon next to the 3-dot menu, and select `/build/panel.html` as the target. You can now inspect the inspector UI as you would a normal webpage.
 
 ### Chrome
 
@@ -179,14 +179,14 @@ Once single-spa Inspector is running, open a new tab and navigate to [about:debu
    - In that folder, take note of the Profile folders (eg. named "Profile 1", "Profile 2", etc. on Mac)
    - Open Chrome and [add a new profile](https://support.google.com/chrome/answer/2364824)
    - Return to the Chrome user data folder and locate the newly created Profile folder
-   - Rename the folder to "single-spa-inspector-dev" (for convenience)
+   - Rename the folder to "single-spa-inspector-pro-dev" (for convenience)
    - Copy the file path for this profile folder
 
 1. Start Chrome with `$CHROME_PROFILE_PATH` env set to the profile folder path
 
    ```sh
    # for Mac
-   CHROME_PROFILE_PATH="~/Library/Application Support/Google/Chrome/single-spa-inspector-dev" npm run start:chrome
+   CHROME_PROFILE_PATH="~/Library/Application Support/Google/Chrome/single-spa-inspector-pro-dev" npm run start:chrome
    ```
 
 #### Debugging

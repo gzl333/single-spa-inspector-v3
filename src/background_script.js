@@ -1,4 +1,4 @@
-// Background script for single-spa Inspector
+// Background script for single-spa Inspector Pro
 // Runs as a Service Worker in Manifest V3
 
 import browser from "webextension-polyfill";

@@ -102,7 +102,7 @@ if (!window.__SINGLE_SPA_DEVTOOLS__) {
 
   function createOverlayDiv(appName, options) {
     const overlayDiv = document.createElement("div");
-    overlayDiv.id = `single-spa-inspector-overlay-${appName}`;
+    overlayDiv.id = `single-spa-inspector-pro-overlay-${appName}`;
 
     const color = options.color || getColor(appName);
     const background = options.background || getColor(appName, 0.1);
@@ -155,6 +155,6 @@ if (!window.__SINGLE_SPA_DEVTOOLS__) {
 // Dispatch event when single-spa routing happens
 // This will be caught by the isolated content script
 window.addEventListener("single-spa:routing-event", () => {
-  window.dispatchEvent(new CustomEvent("single-spa-inspector:routing-event"));
+  window.dispatchEvent(new CustomEvent("single-spa-inspector-pro:routing-event"));
 });
 
