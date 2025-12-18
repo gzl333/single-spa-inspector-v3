@@ -60,6 +60,11 @@ async function handleTabsGet(msg) {
 
 // Listen for messages from content scripts and devtools panel
 browser.runtime.onMessage.addListener((msg, sender) => {
+  // Alive check from panel
+  if (msg.type === "panel-ping") {
+    return Promise.resolve({ ok: true, ts: Date.now() });
+  }
+
   // Handle clear-cache request from devtools panel
   if (msg.type === "clear-cache") {
     return handleClearCache(msg);

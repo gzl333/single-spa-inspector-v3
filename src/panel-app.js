@@ -22,6 +22,10 @@ function PanelRoot(props) {
   const [reloadKey, setReloadKey] = useState(0);
   // 新增：用于触发短暂刷新轮询的计数器
   const [refreshTick, setRefreshTick] = useState(0);
+  // 新增：记录最近一次成功更新的时间戳
+  const [lastUpdateTs, setLastUpdateTs] = useState(null);
+  // 新增：记录端口断开提示
+  const [portDisconnected, setPortDisconnected] = useState(false);
   // 用于跟踪组件是否已挂载
   const isMountedRef = useRef(true);
 
@@ -71,6 +75,14 @@ function PanelRoot(props) {
       isMountedRef.current = false;
     };
   }, [fetchApps, reloadKey]);
+
+  // 记录最近一次成功更新的时间戳，并清除端口断开提示
+  useEffect(() => {
+    if (apps) {
+      setLastUpdateTs(Date.now());
+      setPortDisconnected(false);
+    }
+  }, [apps]);
 
   // 带重试的获取应用列表
   const fetchAppsWithRetry = useCallback(async (maxRetries = 5, interval = 1500) => {
@@ -154,6 +166,17 @@ function PanelRoot(props) {
     };
   }, []);
 
+  // 监听端口断开，提示并触发一次短暂刷新
+  useEffect(() => {
+    const handler = () => {
+      setPortDisconnected(true);
+      setRefreshTick(t => t + 1);
+      fetchAppsWithRetry(2, 800);
+    };
+    window.addEventListener("ext-port-disconnected", handler);
+    return () => window.removeEventListener("ext-port-disconnected", handler);
+  }, [fetchAppsWithRetry]);
+
   // Listen for panel shown event to refresh apps state
   // This ensures we get the latest state after the panel was hidden for a while
   useEffect(() => {
@@ -215,6 +238,36 @@ function PanelRoot(props) {
     };
   }, [apps, refreshTick]);
 
+  // 兜底：长时间无更新时主动拉取（轻量定时检测）
+  useEffect(() => {
+    const STALE_MS = 12000;   // 超过 12 秒认为可能失联
+    const CHECK_MS = 5000;    // 每 5 秒检测一次
+    let timerId;
+    let cancelled = false;
+
+    const tick = async () => {
+      if (cancelled || !isMountedRef.current) return;
+      const now = Date.now();
+      if (apps && lastUpdateTs && now - lastUpdateTs > STALE_MS) {
+        setRefreshTick(t => t + 1); // 触发一次突发刷新
+        // 轻量 ping 背景，确保 service worker 已启动
+        try {
+          await browser.runtime.sendMessage({ type: "panel-ping" });
+        } catch (_) {
+          // 忽略：若失败，突发刷新仍会尝试
+        }
+        fetchAppsWithRetry(3, 1000);
+      }
+      timerId = setTimeout(tick, CHECK_MS);
+    };
+
+    timerId = setTimeout(tick, CHECK_MS);
+    return () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [apps, lastUpdateTs, fetchAppsWithRetry]);
+
   // 加载中或导航中状态
   if (!apps) {
     return (
@@ -267,6 +320,11 @@ function PanelRoot(props) {
             <Tab>Profiler</Tab>
           </TabList>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {portDisconnected && (
+              <span style={{ color: '#e67e22', fontSize: '12px' }}>
+                Connection lost, auto-retrying...
+              </span>
+            )}
             <button
               onClick={handleManualReload}
               title="Reload Inspector"

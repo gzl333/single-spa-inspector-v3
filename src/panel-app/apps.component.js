@@ -173,9 +173,16 @@ export default function Apps(props) {
                 <span
                   className={always("app-status")
                     .maybe("app-mounted", app.status === "MOUNTED")
-                    .maybe("app-not-mounted", app.status !== "MOUNTED")}
+                    .maybe("app-not-mounted", app.status === "NOT_MOUNTED")
+                    .maybe("app-not-loaded", app.status === "NOT_LOADED")
+                    .maybe("app-loading", app.status === "LOADING_SOURCE_CODE")
+                    .maybe("app-bootstrapping", app.status === "BOOTSTRAPPING")
+                    .maybe("app-mounting", app.status === "MOUNTING")
+                    .maybe("app-unmounting", app.status === "UNMOUNTING")
+                    .maybe("app-broken", app.status === "SKIP_BECAUSE_BROKEN")
+                    .maybe("app-load-error", app.status === "LOAD_ERROR")}
                 >
-                  {app.status.replace("_", " ")}
+                  {app.status.replace(/_/g, " ")}
                 </span>
               </div>
               <div role="cell">
@@ -426,7 +433,35 @@ body.dark & .app-name {
 }
 
 & .app-not-mounted {
-  background-color: var(--pink);
+  background-color: var(--gray);
+}
+
+& .app-not-loaded {
+  background-color: #9e9e9e;
+}
+
+& .app-loading {
+  background-color: var(--blue);
+}
+
+& .app-bootstrapping {
+  background-color: #ff9800;
+}
+
+& .app-mounting {
+  background-color: #8bc34a;
+}
+
+& .app-unmounting {
+  background-color: #ff9800;
+}
+
+& .app-broken {
+  background-color: #f44336;
+}
+
+& .app-load-error {
+  background-color: #f44336;
 }
 
 & .import-override-cell {

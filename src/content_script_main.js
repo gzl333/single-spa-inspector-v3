@@ -174,3 +174,11 @@ function dispatchStatusRefresh(reason) {
   window.addEventListener(evtName, () => dispatchStatusRefresh(evtName));
 });
 
+// 页面从 BFCache/隐藏恢复时再派发一次，避免错过事件
+window.addEventListener("pageshow", () => dispatchStatusRefresh("pageshow"));
+window.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    dispatchStatusRefresh("visibilitychange-visible");
+  }
+});
+
