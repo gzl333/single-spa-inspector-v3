@@ -32,8 +32,14 @@ export default function ClearCacheButton() {
         console.error("Clear cache failed:", response?.error);
       }
     } catch (error) {
-      setStatus("error");
-      console.error("Error sending clear-cache message:", error);
+      // Silently handle extension context invalidation
+      if (error.message && error.message.includes("Extension context invalidated")) {
+        console.debug("[single-spa-inspector-pro] Service worker terminated during clear cache");
+        setStatus("error");
+      } else {
+        setStatus("error");
+        console.error("Error sending clear-cache message:", error);
+      }
     } finally {
       setIsClearing(false);
       // Reset status after 2 seconds

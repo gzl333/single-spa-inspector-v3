@@ -9,11 +9,20 @@ let globalOperationVersion = 0;
 async function reloadWithBypassCache() {
   const tabId = browser.devtools.inspectedWindow.tabId;
   // 通过 background script 调用 tabs.reload（在 Firefox devtools panel 中直接调用 tabs API 会失败）
-  await browser.runtime.sendMessage({
-    type: "tabs-reload",
-    tabId,
-    bypassCache: true,
-  });
+  try {
+    await browser.runtime.sendMessage({
+      type: "tabs-reload",
+      tabId,
+      bypassCache: true,
+    });
+  } catch (err) {
+    // Silently handle extension context invalidation
+    if (err.message && err.message.includes("Extension context invalidated")) {
+      console.debug("[single-spa-inspector-pro] Service worker terminated during reload, this is expected");
+      return;
+    }
+    throw err;
+  }
 }
 
 // 判断是否为可恢复的协议错误（不应导致面板崩溃）
@@ -49,6 +58,12 @@ async function waitForPageLoad(maxWaitMs = 30000) {
         // 继续等待
         setTimeout(checkStatus, 200);
       } catch (err) {
+        // Silently handle extension context invalidation
+        if (err.message && err.message.includes("Extension context invalidated")) {
+          console.debug("[single-spa-inspector-pro] Service worker terminated during status check");
+          resolve(false);
+          return;
+        }
         console.warn("[single-spa-inspector-pro] Error checking tab status:", err);
         resolve(false);
       }

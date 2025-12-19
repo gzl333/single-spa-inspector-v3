@@ -141,6 +141,7 @@ Output files will be in `web-ext-artifacts/` directory.
 
 | Version | Changes |
 |---------|---------|
+| **v3.1.3** | Fixed "Extension context invalidated" errors during rapid subapp switching; Added graceful error handling for Service Worker lifecycle in MV3 |
 | **v3.1.2** | Auto-recovery & real-time status: auto-reconnect on port disconnect, page/panel visibility recovery, stale detection fallback, thorough localStorage cleanup for import-map-overrides; Restored Overlays feature: fixed overlay helpers not being invoked after MV3 refactor; now uses ResizeObserver and default single-spa container fallback |
 | **v3.1.0** | Clear Cache & Refresh feature; One-click cache clearing for micro-frontend development |
 | **v3.0.0** | Manifest V3 support; Import Override Toggle UI; Storage persistence |

@@ -253,7 +253,11 @@ function PanelRoot(props) {
         // 轻量 ping 背景，确保 service worker 已启动
         try {
           await browser.runtime.sendMessage({ type: "panel-ping" });
-        } catch (_) {
+        } catch (err) {
+          // Silently handle extension context invalidation
+          if (err.message && err.message.includes("Extension context invalidated")) {
+            console.debug("[single-spa-inspector-pro] Service worker terminated during ping");
+          }
           // 忽略：若失败，突发刷新仍会尝试
         }
         fetchAppsWithRetry(3, 1000);
