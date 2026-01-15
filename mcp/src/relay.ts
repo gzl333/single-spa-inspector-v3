@@ -6,6 +6,7 @@ import {
   getRelayPort,
   getRelayToken,
   getCdpUrl,
+  getAllowedExtensionIds,
   isLocalhost,
   log,
   error,
@@ -13,21 +14,41 @@ import {
 } from './utils.js';
 import type { ExtensionMessage } from './protocol.js';
 
-interface CDPSession {
+interface CDPClient {
   ws: WebSocket;
-  tabId: number;
+}
+
+interface PendingRequest {
+  clientId: string;
+  clientMessageId: number;
+  sessionId?: string;
+}
+
+interface TargetInfo {
+  targetId?: string;
+  title?: string;
+  url?: string;
+  type?: string;
+}
+
+interface AttachedTarget {
   sessionId: string;
+  tabId?: number;
+  targetInfo?: TargetInfo;
 }
 
 const app = new Hono();
 
 let extensionWs: WebSocket | null = null;
-const cdpSessions = new Map<string, CDPSession>();
+const cdpClients = new Map<string, CDPClient>();
+const attachedTargets = new Map<string, AttachedTarget>();
+const pendingRequests = new Map<number, PendingRequest>();
+let nextExtensionRequestId = 1;
 
-const ALLOWED_EXTENSION_IDS = [
-  'dev-extension-id-placeholder',
-  'prod-extension-id-placeholder',
-];
+const ALLOWED_EXTENSION_IDS = getAllowedExtensionIds();
+if (ALLOWED_EXTENSION_IDS.length === 0) {
+  error('No SSPA_EXTENSION_IDS configured. Extension connections will be rejected.');
+}
 
 app.use(cors());
 
@@ -42,21 +63,28 @@ app.get('/version', (c) => {
 app.get('/json/version', (c) => {
   const port = getRelayPort();
   return c.json({
-    WebSocketDebuggerUrl: getCdpUrl(port),
+    Browser: `single-spa-inspector-pro/${VERSION}`,
+    'Protocol-Version': '1.3',
+    webSocketDebuggerUrl: getCdpUrl(port),
   });
 });
 
 app.get('/json/list', (c) => {
-  const targets = Array.from(cdpSessions.values()).map((session) => ({
-    id: session.sessionId,
-    tabId: session.tabId,
-    type: 'page',
-    webSocketDebuggerUrl: getCdpUrl(getRelayPort(), session.sessionId),
-  }));
-  return c.json({ targets });
+  const targets = Array.from(attachedTargets.values()).map((target) => {
+    const targetInfo = target.targetInfo ?? {};
+    return {
+      id: targetInfo.targetId ?? target.sessionId,
+      tabId: target.tabId,
+      type: targetInfo.type ?? 'page',
+      title: targetInfo.title ?? '',
+      url: targetInfo.url ?? '',
+      webSocketDebuggerUrl: getCdpUrl(getRelayPort(), target.sessionId),
+    };
+  });
+  return c.json(targets);
 });
 
-function sendToExtension(message: any): void {
+function sendToExtension(message: unknown): void {
   if (extensionWs?.readyState === WebSocket.OPEN) {
     extensionWs.send(JSON.stringify(message));
   } else {
@@ -64,10 +92,17 @@ function sendToExtension(message: any): void {
   }
 }
 
+function sendToCDPClient(clientId: string, message: unknown): void {
+  const client = cdpClients.get(clientId);
+  if (client?.ws.readyState === WebSocket.OPEN) {
+    client.ws.send(JSON.stringify(message));
+  }
+}
+
 function broadcastToCDPClients(message: unknown): void {
-  for (const session of cdpSessions.values()) {
-    if (session.ws.readyState === WebSocket.OPEN) {
-      session.ws.send(JSON.stringify(message));
+  for (const client of cdpClients.values()) {
+    if (client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(JSON.stringify(message));
     }
   }
 }
@@ -82,7 +117,7 @@ function validateExtensionOrigin(origin: string | null): boolean {
 
 function handleExtensionMessage(data: Buffer) {
   try {
-    const message = JSON.parse(data.toString());
+    const message = JSON.parse(data.toString()) as ExtensionMessage;
 
     if (message.method === 'pong') {
       log('Received pong from extension');
@@ -96,19 +131,40 @@ function handleExtensionMessage(data: Buffer) {
 
     if (message.method === 'forwardCDPEvent') {
       const { sessionId, method, params } = message.params;
-      if (sessionId && cdpSessions.has(sessionId)) {
-        cdpSessions.get(sessionId)?.ws.send(JSON.stringify({ method, params }));
+
+      if (method === 'Target.attachedToTarget' && sessionId) {
+        const targetInfo = (params as { targetInfo?: TargetInfo }).targetInfo;
+        attachedTargets.set(sessionId, {
+          sessionId,
+          targetInfo,
+        });
       }
+
+      if (method === 'Target.detachedFromTarget') {
+        const detachedSessionId = (params as { sessionId?: string }).sessionId;
+        if (detachedSessionId) {
+          attachedTargets.delete(detachedSessionId);
+        }
+      }
+
+      broadcastToCDPClients({ method, params, sessionId });
       return;
     }
 
     if ('id' in message) {
       const response = message as { id: number; result?: unknown; error?: string };
-      broadcastToCDPClients({
-        id: response.id,
-        result: response.result,
-        error: response.error,
-      });
+      const pending = pendingRequests.get(response.id);
+      if (!pending) {
+        error(`Received response for unknown request id: ${response.id}`);
+        return;
+      }
+
+      pendingRequests.delete(response.id);
+      const payload = response.error
+        ? { id: pending.clientMessageId, sessionId: pending.sessionId, error: { message: response.error } }
+        : { id: pending.clientMessageId, sessionId: pending.sessionId, result: response.result };
+
+      sendToCDPClient(pending.clientId, payload);
     }
   } catch (e) {
     error('Error parsing extension message:', e);
@@ -117,36 +173,47 @@ function handleExtensionMessage(data: Buffer) {
 
 function handleCDPMessage(data: Buffer, clientId: string) {
   try {
-    const message = JSON.parse(data.toString());
+    const message = JSON.parse(data.toString()) as { id?: number; method?: string; params?: Record<string, unknown>; sessionId?: string } | { method: 'forwardCDPCommand'; params: { method: string; sessionId?: string; params?: Record<string, unknown> }; id?: number };
 
     if (message.method === 'forwardCDPCommand') {
-      const { id, params } = message as { id: number; params: { method: string; sessionId?: string; params?: Record<string, unknown> } };
+      const { params, id } = message;
+      if (!params?.method || !id) {
+        return;
+      }
+      const relayId = nextExtensionRequestId++;
+      pendingRequests.set(relayId, {
+        clientId,
+        clientMessageId: id,
+        sessionId: params.sessionId,
+      });
       sendToExtension({
-        id,
+        id: relayId,
         method: 'forwardCDPCommand',
         params,
       });
       return;
     }
 
-    if (message.method === 'Target.attachToTarget') {
-      const { sessionId } = message.params || {};
-      if (sessionId) {
-        cdpSessions.set(clientId, {
-          ws: cdpSessions.get(clientId)?.ws || null as unknown as WebSocket,
-          tabId: 0,
-          sessionId,
-        });
-      }
+    if (!message.method || message.id === undefined) {
       return;
     }
 
-    if (message.method === 'Target.detachFromTarget') {
-      cdpSessions.delete(clientId);
-      return;
-    }
+    const relayId = nextExtensionRequestId++;
+    pendingRequests.set(relayId, {
+      clientId,
+      clientMessageId: message.id,
+      sessionId: message.sessionId,
+    });
 
-    broadcastToCDPClients(message);
+    sendToExtension({
+      id: relayId,
+      method: 'forwardCDPCommand',
+      params: {
+        method: message.method,
+        sessionId: message.sessionId,
+        params: message.params,
+      },
+    });
   } catch (e) {
     error('Error parsing CDP message:', e);
   }
@@ -206,6 +273,8 @@ export async function startRelayServer(): Promise<void> {
         if (extensionWs === ws) {
           extensionWs = null;
         }
+        attachedTargets.clear();
+        pendingRequests.clear();
       });
 
       ws.on('error', (err) => {
@@ -230,10 +299,8 @@ export async function startRelayServer(): Promise<void> {
 
       log(`CDP WebSocket connected: ${clientId}`);
 
-      cdpSessions.set(clientId, {
+      cdpClients.set(clientId, {
         ws: ws as WebSocket,
-        tabId: 0,
-        sessionId: clientId,
       });
 
       ws.on('message', (data) => {
@@ -244,7 +311,7 @@ export async function startRelayServer(): Promise<void> {
 
       ws.on('close', () => {
         log(`CDP WebSocket disconnected: ${clientId}`);
-        cdpSessions.delete(clientId);
+        cdpClients.delete(clientId);
       });
 
       ws.on('error', (err) => {

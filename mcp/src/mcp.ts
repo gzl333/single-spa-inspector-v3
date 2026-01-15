@@ -249,8 +249,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'accessibility_snapshot': {
-        const accessibilitySnapshot = (tab.page as Page & { accessibilitySnapshot(): Promise<unknown> }).accessibilitySnapshot;
-        const snapshot = await accessibilitySnapshot();
+        const snapshot = await tab.page.accessibility.snapshot();
         return {
           content: [
             {
@@ -298,13 +297,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'clear_cache_and_reload': {
         const mode = (args.mode as string) || 'light';
+        const client = await tab.page.context().newCDPSession(tab.page);
         if (mode === 'light') {
-          await tab.page.reload({ timeout: 30000 });
+          await client.send('Page.reload', { ignoreCache: true });
         } else {
-          const client = await tab.page.context().newCDPSession(tab.page);
           await client.send('Network.clearBrowserCache');
           await client.send('Network.clearBrowserCookies');
-          await tab.page.reload({ timeout: 30000 });
+          await client.send('Page.reload', { ignoreCache: true });
         }
         await tab.page.waitForLoadState('domcontentloaded');
         return {
@@ -318,7 +317,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ensure_fresh_render': {
-        await tab.page.reload({ timeout: 30000 });
+        const client = await tab.page.context().newCDPSession(tab.page);
+        await client.send('Page.reload', { ignoreCache: true });
         await tab.page.waitForLoadState('domcontentloaded');
         return {
           content: [

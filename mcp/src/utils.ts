@@ -19,6 +19,14 @@ export function getRelayToken(): string | undefined {
   return getEnv('SSPA_MCP_TOKEN');
 }
 
+export function getAllowedExtensionIds(): string[] {
+  const raw = getEnv('SSPA_EXTENSION_IDS');
+  if (!raw) {
+    return [];
+  }
+  return raw.split(',').map((id) => id.trim()).filter((id) => id.length > 0);
+}
+
 export function getCdpUrl(port: number, clientId?: string): string {
   const id = clientId ?? 'default';
   return `ws://127.0.0.1:${port}/cdp/${id}`;
